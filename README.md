@@ -8,12 +8,11 @@
 
 **IcedFrisby** is a Node.js npm module that makes testing API endpoints easy, fast and fun. Based on the original [Frisby](https://github.com/vlucas/frisby) project.
 
-This is still a major work-in-progress and should be considered unstable.
-
 ## :orange_book: API Documentation
-Most of IcedFrisby's features are in the [Frisby API docs](http://frisbyjs.com/docs/api/).
-
 The [**IcedFrisby** API Docs](https://github.com/RobertHerhold/IcedFrisby/blob/master/API.md) are located in [API.md](https://github.com/RobertHerhold/IcedFrisby/blob/master/API.md).
+
+## Changelog
+The [**IcedFrisby** Changelog](https://github.com/RobertHerhold/IcedFrisby/blob/master/CHANGELOG.md) is located in [CHANGELOG.md](https://github.com/RobertHerhold/IcedFrisby/blob/master/CHANGELOG.md).
 
 ## What makes IcedFrisby different?
 * Uses [Mocha](https://github.com/mochajs/mocha) as the driver instead of Jasmine
@@ -102,6 +101,9 @@ Run tests as you normally would with [Mocha](https://github.com/mochajs/mocha).
 
 ## IcedFrisby Development
 
+### Setup
+Code quality is enforced with JSHint. You will need to install JSHint as it is run with the tests: `npm install -g jshint`
+
 ### Code Coverage
 You can assess code coverage by running `istanbul cover _mocha ./spec/**/*_spec.js -R spec`
 
@@ -110,11 +112,9 @@ Contributions are awesome! If you have an idea or code that you want to contribu
 
 ### Roadmap
 1. Make output errors more useful. It can be hard to track down which assertion is causing what error.
-1. More test coverage!
-1. README API guide
 1. Add a "stack trace" for paths to help discern why a path traversal failed
-1. Support [chained tests](https://github.com/vlucas/frisby/issues/223)
-1. ES6 support
+1. Support [chained tests/promises](https://github.com/vlucas/frisby/issues/223). Related: [#127](https://github.com/vlucas/frisby/issues/127), [#154](https://github.com/vlucas/frisby/issues/154), [#200](https://github.com/vlucas/frisby/issues/200)
+1. custom assertion plugin support
 
 ## License
 Licensed under the [MIT](http://opensource.org/licenses/MIT)/[BSD](http://opensource.org/licenses/BSD-3-Clause) license.

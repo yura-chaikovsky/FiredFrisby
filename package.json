@@ -1,6 +1,6 @@
 {
   "name": "icedfrisby",
-  "version": "0.0.10",
+  "version": "0.2.4",
   "description": "IcedFrisby: REST API Endpoint Testing built on Mocha and Chai",
   "homepage": "https://github.com/RobertHerhold/IcedFrisby",
   "author": "Robert Herhold",
@@ -27,7 +27,7 @@
     "frisby"
   ],
   "dependencies": {
-    "chai": "^2.1.0",
+    "chai": "^3.1.0",
     "chai-subset": "^1.0.0",
     "chai-things": "^0.2.0",
     "chalk": "^1.0.0",
@@ -35,24 +35,29 @@
     "joi": "^6.0.0",
     "lodash": "^3.3.1",
     "mock-request": ">= 0.1.2",
-    "qs": "~2.4.1",
+    "nconf": "^0.7.1",
+    "nconf-yaml": "^1.0.0",
+    "qs": "~4.0.0",
     "request": ">=2.51",
     "stack-trace": "0.0.x"
   },
   "devDependencies": {
     "coveralls": "^2.11.2",
+    "express": "^4.12.3",
     "form-data": "~0.2.0",
     "istanbul": "^0.3.6",
+    "jshint": "^2.7.0",
     "mocha": "^2.1.0",
     "mocha-lcov-reporter": "0.0.2",
     "mochawesome": "^1.0.5",
-    "nock": "*"
+    "nock": "~2.7.0"
   },
   "main": "./lib/icedfrisby",
   "engines": {
     "node": ">= 0.10.0"
   },
   "scripts": {
-    "test": "mocha spec/**/*.js"
+    "pretest": "./node_modules/.bin/jshint **/*.js",
+    "test": "mocha spec"
   }
 }

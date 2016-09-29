@@ -14,13 +14,30 @@
 			- [Testing Nested Objects](#testing-nested-objects)
 			- [Testing All Objects in an Array](#testing-all-objects-in-an-array)
 			- [Testing One Object in an Array](#testing-one-object-in-an-array)
+	- [useApp()](#useapp)
+		- [Example Use:](#example-use)
+			- [Express Application:](#express-application)
+			- [IcedFrisby Test:](#icedfrisby-test)
 	- [Global Setup](#global-setup)
 		- [request.baseUri](#requestbaseuri)
 		- [request.headers](#requestheaders)
 		- [request.json](#requestjson)
 		- [request.inspectOnFailure](#requestinspectonfailure)
 		- [failOnMultiSetup](#failonmultisetup)
+		- [useApp](#useapp-in-globalsetup)
 		- [Resetting `globalSetup`](#resetting-globalsetup)
+	- [Helpers](#helpers)
+		- [after()](#after)
+		- [afterJSON()](#afterjson)
+	- [Inspectors](#inspectors)
+		- [inspect(cb)](#inspectcb)
+		- [inspectRequest(message)](#inspectrequestmessage)
+		- [inspectResponse(message)](#inspectresponsemessage)
+		- [inspectHeaders(message)](#inspectheadersmessage)
+		- [inspectJSON(message)](#inspectjsonmessage)
+		- [inspectBody(message)](#inspectbodymessage)
+		- [inspectStatus(message)](#inspectstatusmessage)
+		- [Send Raw JSON or POST Body](#send-raw-json-or-post-body)
 
 ## Expectations
 
@@ -225,6 +242,58 @@ To test a single object in an array, use an asterisk character, so the path look
 .toss();
 ```
 
+## useApp()
+
+IcedFrisby provides the `useApp(app, basePath)` function to bootstrap a Node.js http.Server-based application. Provide your `app` object and IcedFrisby will start the [Express](expressjs.com)/[Koa](koajs.com)/etc application and proceed to test against the application.
+
+This is similar to [supertest's](https://github.com/visionmedia/supertest) request function:
+> You may pass an http.Server, or a Function to request() - if the server is not already listening for connections then it is bound to an ephemeral port for you so there is no need to keep track of ports.
+
+This overrides the globalSetup baseUri option for the current test.
+
+:warning: If you are using `useApp()` and [`reset()`](#resetting-globalsetup) in the same test, be sure to use [`reset()`](#resetting-globalsetup) **prior** to calling `useApp()` otherwise the base URL `useApp()` sets will be removed.
+
+:warning: If you are using `useApp()` to override the app used in the global setup, be sure to use `useApp()` prior to calling `get()`, `patch()`, `post()`, `put()`, `delete()`, `head()`, or `options()`. Otherwise, the app will not be overwritten and the app specified in the global setup will be used instead
+
+* Types: `app`: `http.Server`, `basePath`: `string`
+* Defaults: `app`: `none`, `basePath`: `''`
+
+### Example Use:
+
+#### Express Application:
+```javascript
+var express = require('express');
+var app = express();
+
+app.get('/', function(req, res) {
+    res.send('Hello World!');
+});
+
+// prevent the app from starting if it is required as a module (it is in this example!)
+if (!module.parent) {
+    var server = app.listen(3000, function() {
+        var host = server.address().address;
+        var port = server.address().port;
+        console.log('Example app listening at http://%s:%s', host, port);
+    });
+}
+
+module.exports = app; // export the application
+```
+
+#### IcedFrisby Test:
+```javascript
+var app = require('./app');
+
+describe('Express app integration', function() {
+    frisby.create('should start the app and request')
+        .useApp(app)
+        .get('/')
+        .expectStatus(200)
+        .expectBodyContains('Hello World!')
+        .toss();
+});
+```
 
 ## Global Setup
 
@@ -299,6 +368,16 @@ frisby.globalSetup({
 });
 ```
 
+### useApp in globalSetup
+Specifying a Node.js http.Server-based application in global setup will apply [useApp()](#useapp) to every test.
+
+``` javascript
+frisby.globalSetup({
+    useApp: require('./myApp.js')
+});
+
+```
+
 ### Resetting `globalSetup`
 Resets the `globalSetup` settings for the current test.
 
@@ -347,18 +426,87 @@ frisby.create('First test')
 ## Inspectors
 Inspectors are useful for viewing details about HTTP requests and responses in the console.
 
-### inspectJSON()
-Dumps parsed JSON body to the console.
+### inspect(cb)
+Provides access to request and response data before expectations are executed. This should not be used for assertions. Use [after()](https://github.com/RobertHerhold/IcedFrisby/blob/master/API.md#after) for more assertions.
+* Types: `cb`: `function(err, req, res, body, headers)`
+  - callback types:
+    * `err`: `Error` object is there was an error making the request. Will be `null` if no error is present.
+	* `req`: request `object` IcedFrisby made to the endpoint
+	* `res`: response `object` received from the endpoint
+	* `body`: body `object`, a part of the response
+	* `headers`: headers `object`, a part of the response
+* Defaults: `none`, performs no action if the callback is a false value
+
+```javascript
+frisby.create('Inspecting some data')
+  .get('http://httpbin.org/get?foo=bar&bar=baz')
+  .inspect(function(err, req, res, body, headers) {
+	console.log('Got args:' + body.args);
+})
+.toss()
+```
+
+### inspectRequest(message)
+Inspects the entire request object sent from IcedFrisby.
+* Types: `message`: `string` An optional message to print before the inspection
+* Defaults: `none`
 
 ```javascript
 frisby.create('Just a quick inspection of the JSON HTTP response')
   .get('http://httpbin.org/get?foo=bar&bar=baz')
-    .inspectJSON()
-.toss()
+  .inspectRequest()
+  .toss()
 ```
 
+### inspectResponse(message)
+Inspects the entire response.
+* Types: `message`: `string` An optional message to print before the inspection
+* Defaults: `none`
+
 ```javascript
-// Console output
+frisby.create('Just a quick inspection of the JSON HTTP response')
+  .get('http://httpbin.org/get?foo=bar&bar=baz')
+  .inspectResponse()
+  .toss()
+```
+
+### inspectHeaders(message)
+Inspects the response headers.
+* Types: `message`: `string` An optional message to print before the inspection
+* Defaults: `none`
+
+```javascript
+frisby.create('Just a quick inspection of the JSON HTTP response')
+  .get('http://httpbin.org/get?foo=bar&bar=baz')
+  .inspectHeaders()
+  .toss()
+```
+
+Console output:
+```json
+{ server: 'nginx',
+  date: 'Sun, 17 May 2015 02:38:21 GMT',
+  'content-type': 'application/json',
+  'content-length': '188',
+  connection: 'close',
+  'access-control-allow-origin': '*',
+  'access-control-allow-credentials': 'true' }
+```
+
+### inspectJSON(message)
+Dumps parsed JSON body to the console.
+* Types: `message`: `string` An optional message to print before the inspection
+* Defaults: `none`
+
+```javascript
+frisby.create('Just a quick inspection of the JSON HTTP response')
+  .get('http://httpbin.org/get?foo=bar&bar=baz')
+  .inspectJSON()
+  .toss()
+```
+
+Console output:
+```javascript
 { url: 'http://httpbin.org/get?foo=bar&bar=baz',
   headers:
    { 'Content-Length': '',
@@ -371,15 +519,17 @@ frisby.create('Just a quick inspection of the JSON HTTP response')
   origin: '127.0.0.1' }
 ```
 
-### inspectBody()
-Dumps the raw response body to the console without any parsing or added markup.
+### inspectBody(message)
+Dumps the raw response body to the console without any parsing.
+* Types: `message`: `string` An optional message to print before the inspection
+* Defaults: `none`
 
 ```javascript
 // Test
 frisby.create('Very useful for HTML, text, or raw output')
   .get('http://asciime.heroku.com/generate_ascii?s=Frisby.js')
-    .inspectBody()
-.toss()
+  .inspectBody()
+  .toss()
 ```
 
 Console output:
@@ -392,6 +542,18 @@ Console output:
  |_|  |_|  |_|___/_.__/ \__, (_) |___/
                          __/ |_/ |
                         |___/|__/
+```
+
+### inspectStatus(message)
+Inspects the response status.
+* Types: `message`: `string` An optional message to print before the inspection
+* Defaults: `none`
+
+```javascript
+frisby.create('Just a quick inspection of the JSON HTTP response')
+  .get('http://httpbin.org/get?foo=bar&bar=baz')
+  .inspectStatus()
+  .toss()
 ```
 
 ### Send Raw JSON or POST Body
